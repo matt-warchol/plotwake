@@ -1,0 +1,17 @@
+{
+  "timeZone": "Europe/Madrid",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      {"userSymbol": "AnalyticsData", "version": "v1beta", "serviceId": "analyticsdata"},
+      {"userSymbol": "AnalyticsAdmin", "version": "v1alpha", "serviceId": "analyticsadmin"}
+    ]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/webmasters.readonly",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "webapp": {"executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS"}
+}

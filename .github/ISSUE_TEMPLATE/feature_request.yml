@@ -1,0 +1,13 @@
+name: Improvement
+description: A specific daily workflow Plotwake could improve
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What decision or task are you trying to complete?
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: What is the smallest change that would help?

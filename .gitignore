@@ -1,0 +1,10 @@
+node_modules/
+dist/
+demo-dist/
+.env
+.env.*
+!.env.example
+data/
+*.sqlite*
+*.log
+.DS_Store
