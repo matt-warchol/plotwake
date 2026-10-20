@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';import * as metrics from '../lib/metrics.ts';
+const m={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/v2.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:m.exports,require:()=>metrics,Map,Date,Intl,URL});
+const {through,scopeTotals,dateOffset,setupKey}=m.exports;
+const ps=metrics.defaults.slice(0,2).map((p,i)=>({...p,ga:'properties/'+(100+i),gaSince:'2025-01-01'}));
+const rs=metrics.demoReports(ps).map((r,k)=>({...r,days:r.days.map(d=>({...d,sessions:(k+1)*10,clicks:(k+1)*2}))}));
+const end=rs[0].endDate;
+assert.equal(scopeTotals(ps,rs,'sessions',28,end).current,840);
+assert.equal(scopeTotals([ps[0]],rs,'sessions',28,end).current,280,'KPI totals must follow project scope');
+const unverified={...ps[1],gaSince:undefined};const sparse={...rs[1],days:rs[1].days.map((d,i)=>({...d,sessions:i<152?0:20}))};
+const partial=scopeTotals([ps[0],unverified],[rs[0],sparse],'sessions',28,end);assert.equal(partial.current,840);assert.equal(partial.comparable,1);assert.equal(partial.delta,0,'Like-for-like delta must exclude projects with unverified baselines');
+const now=new Date('2026-10-20T10:00:00Z');const recent={...rs[0],days:[{date:'2026-10-17',sessions:1,clicks:1,impressions:2},{date:'2026-10-18',sessions:2,clicks:1,impressions:3},{date:'2026-10-19',sessions:3,clicks:null,impressions:null}]};
+assert.equal(through([recent],'sessions',false,now),'2026-10-19');assert.equal(through([recent],'clicks',false,now),'2026-10-18');assert.equal(through([recent],'sessions',true,now),'2026-10-17');assert.equal(through([],'sessions',false,now),null);
+assert.notEqual(setupKey(ps[0]),setupKey({...ps[0],ga:'properties/888'}));assert.equal(dateOffset('2026-10-01',-1),'2026-09-30');
+console.log('OK: scoped KPIs, like-for-like comparisons, source-specific dates, settled mode, reminder configuration keys.');

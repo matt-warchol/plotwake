@@ -51,3 +51,13 @@ Optional: confirm source tracking start dates only if you know measurement was a
 | Old behavior after editing | Deploy → Manage deployments → Edit → Version: New version → Deploy; saving alone does not update /exec |
 
 Your Google OAuth token remains inside the script. Never paste the connection key into issues, screenshots, chat messages or public source. See SECURITY.md for storage/rotation guidance.
+
+## Upgrading from 0.1.0
+
+Back up your SQLite directory, update Plotwake, run `npm ci` and rebuild. Keep the same `.env` and database path. No destructive database migration is required.
+
+For yesterday’s provisional figures and the new traffic detail panels, replace Code.gs in **your existing Apps Script** with the updated file here. Keep its existing manifest and script properties; the connection key and read-only OAuth scopes are unchanged. Then **Deploy → Manage deployments → Edit the existing web app → Version: New version → Deploy**. Saving the file alone does not update the deployed web app.
+
+Keep the same /exec URL, return to Plotwake, and click Fetch latest. Older scripts still support the daily overview through a compatibility fallback, but retain their three-day delay and cannot supply detail reports. The dashboard explains when the script needs updating.
+
+Breakdown units differ: channels/referrers/campaigns/countries/entry pages use sessions, pages use page views, and search queries use clicks. Query lists omit anonymised queries and will not add up to all search clicks. Top rows are bounded. Shared GA4 properties still need to match the intended project scope.

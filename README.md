@@ -15,10 +15,11 @@ This is the whole application. It runs on Node.js with a local SQLite database. 
 ## What you get
 
 - **A daily briefing.** Source warnings and meaningful declines come first. Small samples and incomplete baselines stay explicit. The briefing is calculated by rules, not an AI model.
-- **Three useful numbers.** Visits across all channels, Google web-search clicks and impressions. Compare 7, 28 or 90 complete days with the preceding period.
-- **Several projects, one board.** Filter by signal, inspect individual trends, and open the corresponding Google report.
+- **Three useful numbers.** Visits across all channels, Google web-search clicks and impressions. Compare 7, 28 or 90 days with the preceding period. Choose the latest available dates or exclude the last 3 days.
+- **Several projects, one board.** Toggle project names in the chart legend to compare any subset. The same selection scopes KPIs, the briefing, every detail report and the project table. Open each source in Google from Data health.
 - **Numbers with context.** Absolute changes before percentages. Missing history is not a measured zero. Overlapping Search Console scopes count once, including nested subdomains.
 - **Graceful failures.** A failed Search Console request does not hide healthy GA4 visits. Existing reports remain available, with warnings and last-successful-fetch timestamps.
+- **Traffic details.** Channels, referrers, campaigns, pages, entry pages, countries and Google search queries, with explicit units and date windows. Optional setup reminders can be hidden and restored.
 - **A practical interface.** Mobile project cards, visible freshness, remembered view settings, separate settings drafts and Cancel.
 
 ## Try before connecting anything
@@ -101,7 +102,7 @@ See [Google setup and troubleshooting](docs/google-setup.md) for the manifest, C
 
 ## How to read the signals
 
-The last 3 days are excluded to allow reporting to settle. GA4 follows its property timezone; Search Console follows Pacific Time, so the daily boundaries can differ.
+Latest available requests reports through yesterday. Recent figures are provisional and Google can revise them. Choose **Exclude last 3 days** for a more settled view. The source dates and the last fetch timestamp are shown separately. GA4 follows its property timezone; Search Console follows Pacific Time, so the daily boundaries can differ.
 
 - **Growing / Declining:** at least 10% and 5 units of change, with at least 30 units across both periods and a usable baseline.
 - **Small sample:** fewer than 30 across both complete periods.
@@ -109,15 +110,15 @@ The last 3 days are excluded to allow reporting to settle. GA4 follows its prope
 - **No data:** no complete set of values for the selected period/source.
 - **Source issue:** that provider returned an error or warning. Cached figures may remain visible; affected metrics are excluded from portfolio conclusions.
 
-Portfolio totals show available projects. Changes explicitly identify the comparable subset; they may cover fewer projects than the current total. The chart hides its preceding-period comparison if the selected scope lacks a complete baseline. The briefing prioritizes visits and falls back to healthy Google clicks.
+Portfolio totals show available projects. Changes explicitly identify the comparable subset; they may cover fewer projects than the current total. The chart draws a coloured line per visible project and a dashed line for the preceding period. Historical lines remain visible even when tracking coverage is not verified; growth percentages still require a verified baseline. The briefing prioritizes visits and falls back to healthy Google clicks.
 
 Search Console parent scopes have their direct child scopes subtracted before rendering, so a domain and subdomain are not added twice. Negative or unreconcilable overlaps are flagged rather than clamped into invented values. A site's GA4 property should correspond to the intended site; a domain label alone does not filter a shared GA4 property by hostname.
 
 ## Refreshing and limits
 
-Reports refresh on opening or returning to the page when the last fetch is more than 6 hours old. While open, freshness is checked each minute. Automatic failures retry at most every 15 minutes. The server caches unchanged report requests for 60 seconds. **There is no overnight job while the app is closed.**
+Reports older than 6 hours refresh on opening. Use **Fetch latest** for a manual refresh. Returning to the tab checks for reports older than 6 hours; while open, this is checked every 15 minutes. Failed automatic attempts wait at least 15 minutes before retrying. The server caches unchanged report requests for 60 seconds. Detail reports are cached for up to one hour and invalidated by a new daily fetch. **There is no overnight job while the app is closed.**
 
-Up to 30 projects; 180 days of fetched history; Google quotas and Apps Script execution limits still apply. This first release is a personal portfolio overview, not a revenue attribution tool, SEO audit, uptime monitor or substitute for Google's detailed reports. Google can omit, threshold or delay data. No recommendation proves the cause of a change.
+Up to 30 projects; 180 days of fetched history; Google quotas and Apps Script execution limits still apply. Plotwake is a personal portfolio overview, not a revenue attribution tool, SEO audit, uptime monitor or substitute for Google's detailed reports. Google can omit, threshold or delay data. No recommendation proves the cause of a change.
 
 ## Development
 
@@ -130,6 +131,8 @@ npm run build:demo
 ```
 
 After building, `npm run dev` starts the private Node server; it does not provide frontend hot reload. For frontend-only work, `npx vite --mode demo` runs the synthetic interface with hot reload.
+
+Upgrading from 0.1? Follow the [v2 upgrade steps](docs/google-setup.md#upgrading-from-010). Existing SQLite data and source mappings are retained.
 
 Core calculations live in `lib/`; the UI in `src/`; storage and authenticated HTTP serving in `server/`. The public demo is a separate static build. See [architecture](docs/architecture.md) and [contributing](CONTRIBUTING.md).
 

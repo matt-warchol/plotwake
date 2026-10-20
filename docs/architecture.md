@@ -2,11 +2,12 @@
 
 The React interface renders aggregate reports and a deterministic executive summary. Vite builds static assets. The Node 24+ HTTP server authenticates every request, serves those files, validates API operations with Zod, and stores JSON records in SQLite using Node's built-in SQLite library.
 
-- `src/dashboard.tsx`: overview, chart, mobile cards, connection setup, settings drafts and view preferences.
+- `src/overview.tsx` and `src/overview.css`: v2 overview, multi-project chart selection, scoped metrics, breakdowns, briefing, source health and reminders.
+- `src/dashboard.tsx`: connection setup, project editing, settings drafts and Cancel.
 - `lib/metrics.ts`: source-specific errors, comparison coverage, signal thresholds, disjoint Search Console scopes and synthetic fixtures.
-- `lib/summary.ts`: rules and prioritization for the briefing. No LLM calls.
+- `lib/summary.ts`: legacy briefing helpers. `lib/v2.ts`: shared v2 date windows, scope totals and reminder keys; the briefing uses these deterministic signals. No LLM calls.
 - `lib/snapshots.ts`: retain only compatible source mappings and preserve last successful data on partial failures.
-- `server/api.ts`: discover sources, save projects, fetch and validate 180-day reports. Remote calls accept only the canonical Google Apps Script deployment format.
+- `server/api.ts`: discover sources, save projects, fetch and validate 180-day reports, v2 detail reports and saved reminder preferences. Remote calls accept only the canonical Google Apps Script deployment format.
 - `server/index.ts`: authenticated HTTP boundary, bounded failed-login tracking, static-file boundary, HTTP headers and request-size limit.
 - `server/store.ts`: SQLite persistence, parameterized statements and restrictive file permissions.
 - `public/google/`: the script and OAuth manifest users install in their own Google account.
