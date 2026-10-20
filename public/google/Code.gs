@@ -14,6 +14,7 @@ function doPost(e) {
     if(!key || input.secret!==key) return json_({ok:false,error:'Invalid connection key.'});
     if(input.action==='discover') return json_(discover_());
     if(input.action==='breakdownV2') return json_(breakdownV2_(input));
+    if(input.action==='realtimeV3') return json_(realtimeV3_(input));
     if(input.action==='report'||input.action==='reportV2') {
       if(!Array.isArray(input.projects)||input.projects.length>30) throw Error('Invalid project list');
       var end=new Date();end.setUTCDate(end.getUTCDate()-(input.action==='reportV2'?1:3));end=new Date(end.toISOString().slice(0,10)+'T00:00:00Z');
@@ -81,4 +82,38 @@ function breakdownV2_(input){
   }catch(e){errors.push(p.id+': '+String(e.message||e).slice(0,800));}
  });
  return {ok:true,rows:rows,errors:errors};
+}
+
+// Realtime uses the same read-only OAuth scope and connection key as daily reports.
+// A property total is requested separately from country rows: summing countries can
+// count one active user more than once if they move between countries in the window.
+function realtimeV3_(input){
+ if(!Array.isArray(input.projects)||input.projects.length>30)throw Error('Invalid project list');
+ var range=[{startMinutesAgo:4,endMinutesAgo:0}];
+ var result=input.projects.map(function(p){
+  if(typeof p.id!=='string'||!/^properties\/\d+$/.test(p.ga||''))throw Error('Invalid GA4 property');
+  var url='https://analyticsdata.googleapis.com/v1beta/'+p.ga+':runRealtimeReport';
+  var item={id:p.id,activeUsers:null,countries:[],views:null,error:''};
+  try{
+   var countries=google_(url,{dimensions:[{name:'countryId'}],metrics:[{name:'activeUsers'}],minuteRanges:range,metricAggregations:['TOTAL'],limit:'250'});
+   var total=countries.totals&&countries.totals[0]&&countries.totals[0].metricValues&&countries.totals[0].metricValues[0];
+   if(!total){
+    var direct=google_(url,{metrics:[{name:'activeUsers'}],minuteRanges:range});
+    total=direct.rows&&direct.rows[0]&&direct.rows[0].metricValues&&direct.rows[0].metricValues[0];
+   }
+   if(!total&&(countries.rows||[]).length)throw Error('GA4 did not return an active-user total.');
+   item.activeUsers=total?Number(total.value):0;
+   if(!isFinite(item.activeUsers)||item.activeUsers<0)throw Error('GA4 returned an invalid active-user total.');
+   item.countries=(countries.rows||[]).filter(function(row){return /^[A-Z]{2}$/.test((row.dimensionValues||[])[0]&&row.dimensionValues[0].value||'');}).map(function(row){return {code:row.dimensionValues[0].value,count:Number(row.metricValues[0].value)};}).filter(function(row){return isFinite(row.count)&&row.count>0;}).sort(function(a,b){return b.count-a.count;}).slice(0,12);
+   if(countries.metadata&&countries.metadata.subjectToThresholding)item.error='GA4 privacy thresholds may hide some country rows.';
+  }catch(e){item.activeUsers=null;item.countries=[];item.error='Active users: '+String(e.message||e).slice(0,300);return item;}
+  try{
+   var minutes=google_(url,{dimensions:[{name:'minutesAgo'}],metrics:[{name:'screenPageViews'}],minuteRanges:range,limit:'5'});
+   var views=[0,0,0,0,0];
+   (minutes.rows||[]).forEach(function(row){var ago=Number(row.dimensionValues[0].value),n=Number(row.metricValues[0].value);if(Number.isInteger(ago)&&ago>=0&&ago<=4&&isFinite(n)&&n>=0)views[4-ago]=n;});
+   item.views=views;
+  }catch(e){item.error+=(item.error?' ':'')+'Page views: '+String(e.message||e).slice(0,300);}
+  return item;
+ });
+ return {ok:true,projects:result};
 }

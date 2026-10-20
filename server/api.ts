@@ -5,6 +5,7 @@ import {connectionSchema,connectionHelp} from "../lib/connection.ts";
 import {read,write} from "./store.ts";
 const projectSchema=z.object({id:z.string().regex(/^[a-z0-9-]{1,80}$/),name:z.string().trim().min(1).max(80),domain:z.string().max(253).refine(v=>!v||/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(v)),color:z.string().regex(/^#[a-f0-9]{6}$/i),ga:z.string().regex(/^(properties\/\d+)?$/),gaSince:z.string().date().refine(v=>v<=new Date().toISOString().slice(0,10)).optional().or(z.literal("")),gscSince:z.string().date().refine(v=>v<=new Date().toISOString().slice(0,10)).optional().or(z.literal("")),gsc:z.string().max(500).refine(v=>!v||/^sc-domain:[a-z0-9.-]+$/i.test(v)||z.string().url().safeParse(v).success&&/^https?:\/\//.test(v))});
 const reportSchema=z.object({id:z.string(),endDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),errors:z.array(z.string().max(1000)).max(5),days:z.array(z.object({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),sessions:z.number().finite().nonnegative().nullable(),clicks:z.number().finite().nonnegative().nullable(),impressions:z.number().finite().nonnegative().nullable()})).length(180),freshness:z.object({gaThrough:z.string().date().optional(),gscThrough:z.string().date().optional(),firstIncompleteDate:z.string().date().optional(),gaTimezone:z.string().max(100).optional()}).optional()}).superRefine((r,ctx)=>{const end=Date.parse(r.endDate+"T00:00:00Z");if(!Number.isFinite(end)||r.days.some((d,i)=>d.date!==new Date(end-(179-i)*86400000).toISOString().slice(0,10)))ctx.addIssue({code:z.ZodIssueCode.custom,message:"Invalid date series"});});
+const realtimeSchema=z.object({projects:z.array(z.object({id:z.string().max(80),activeUsers:z.number().finite().nonnegative().nullable(),countries:z.array(z.object({code:z.string().regex(/^[A-Z]{2}$/),count:z.number().finite().nonnegative()})).max(12),views:z.array(z.number().finite().nonnegative()).length(5).nullable(),error:z.string().max(1000).optional()})).max(30)});
 function reply(data:unknown,status=200){return Response.json(data,{status,headers:{"Cache-Control":"private, no-store"}});}
 async function remote(connection:{url:string;secret:string},action:string,projects?:unknown,extra:Record<string,unknown>={}){
  const result=await fetch(connection.url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({secret:connection.secret,action,projects,...extra}),signal:AbortSignal.timeout(150000),redirect:"follow"});
@@ -35,6 +36,23 @@ export async function POST(request:Request){
  const result=z.object({rows:z.array(z.object({label:z.string().max(2000),value:z.number().finite().nonnegative(),impressions:z.number().finite().nonnegative().optional(),project:z.string().max(80).optional()})).max(900),errors:z.array(z.string().max(1000)).max(40)}).parse(data);
  const grouped=new Map<string,BreakdownRow>();for(const row of result.rows){const key=(kind==="pages"||kind==="landing"||kind==="queries")?(row.project||"")+"|"+row.label:row.label;const old=grouped.get(key);grouped.set(key,{...row,value:(old?.value||0)+row.value,impressions:row.impressions===undefined?undefined:(old?.impressions||0)+row.impressions});}
  const output={rows:[...grouped.values()].sort((a,b)=>b.value-a.value).slice(0,50),errors:result.errors,endDate,startDate:new Date(Date.parse(endDate+"T00:00:00Z")-(n-1)*86400000).toISOString().slice(0,10),fetchedAt:new Date().toISOString()};await write(cacheKey,output);return reply(output);
+ }
+ if(body.action==="realtime"){
+ const [connection,all]=await Promise.all([read("connection",null),read("projects",[])]);
+ if(!connection)throw new Error("Connect Google first");
+ const sources=(all as Array<{id:string;ga:string}>).filter(p=>p.ga).map(p=>({id:p.id,ga:p.ga}));
+ if(!sources.length)return reply({projects:[],fetchedAt:new Date().toISOString()});
+ if(new Set(sources.map(p=>p.ga)).size!==sources.length)throw new Error("One GA4 property is assigned to multiple projects. Fix the source mapping before viewing live totals.");
+ const cacheKey="realtime-v3:"+JSON.stringify(sources),cached=await read(cacheKey,null);
+ if(cached&&Date.now()-Date.parse(cached.fetchedAt)<60000)return reply(cached);
+ let raw;
+ try{raw=await remote(connection,"realtimeV3",sources);}catch(error){
+  if(error instanceof Error&&/Unknown operation/.test(error.message))return reply({upgradeRequired:true,projects:[],fetchedAt:null});
+  throw error;
+ }
+ const parsed=realtimeSchema.parse(raw);
+ if(parsed.projects.length!==sources.length||new Set(parsed.projects.map(p=>p.id)).size!==sources.length||parsed.projects.some(p=>!sources.some(s=>s.id===p.id)))throw new Error("Incomplete live response from Google");
+ const result={...parsed,fetchedAt:new Date().toISOString()};await write(cacheKey,result);return reply(result);
  }
  if(body.action==="connect"){
  let connection;

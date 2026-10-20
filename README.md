@@ -4,9 +4,9 @@
 <p align="center"><a href="https://avo42.com/pulse/">Try the live demo</a> · <a href="#quick-start">Run it yourself</a> · <a href="docs/google-setup.md">Connect Google</a> · <a href="https://github.com/matt-warchol/plotwake/issues">Issues</a></p>
 <p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-328d79" alt="MIT license"></a> <img src="https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white" alt="Node.js 24 or later"> <img src="https://img.shields.io/badge/self--hosted-your%20data%2C%20your%20server-5b9dcb" alt="Self-hosted"></p>
 
-[![Click through Plotwake's public demo — all figures are synthetic](assets/plotwake-demo.gif)](https://avo42.com/pulse/)
+[![Plotwake Live pulse: rotate the country globe, switch to the activity matrix, and watch sample activity update](assets/plotwake-demo.gif)](https://avo42.com/pulse/)
 
-*Real project names, synthetic numbers. This animation and the public demo do not show actual project traffic.*
+*Real project names, synthetic numbers. The animation and [public demo](https://avo42.com/pulse/) do not show actual project traffic.*
 
 I kept shipping small websites, then opening a different Google property for each one just to see whether anything was happening. Plotwake is the screen I wanted to open in the morning: what is growing, what needs attention, and what is too early to judge.
 
@@ -16,6 +16,7 @@ This is the whole application. It runs on Node.js with a local SQLite database. 
 
 - **A daily briefing.** Source warnings and meaningful declines come first. Small samples and incomplete baselines stay explicit. The briefing is calculated by rules, not an AI model.
 - **Three useful numbers.** Visits across all channels, Google web-search clicks and impressions. Compare 7, 28 or 90 days with the preceding period. Choose the latest available dates or exclude the last 3 days.
+- **A live pulse below the main chart.** See active GA4 users from the last five minutes, a dotted country globe, and a project-by-project activity matrix. Tap a country or a minute to see the detail. It refreshes while visible; the public demo uses synthetic updates.
 - **Several projects, one board.** Toggle project names in the chart legend to compare any subset. The same selection scopes KPIs, the briefing, every detail report and the project table. Open each source in Google from Data health.
 - **Numbers with context.** Absolute changes before percentages. Missing history is not a measured zero. Overlapping Search Console scopes count once, including nested subdomains.
 - **Graceful failures.** A failed Search Console request does not hide healthy GA4 visits. Existing reports remain available, with warnings and last-successful-fetch timestamps.
@@ -96,7 +97,9 @@ Browser → your password-protected Node server → your Google Apps Script
               your SQLite file                  GA4 + Search Console
 ```
 
-Google authorizes the script in your account. Your Google OAuth token remains inside Apps Script. The dashboard sends a separate connection key to the script and receives aggregate daily reports. It does not add a new tracking script to your websites or collect visitor-level events itself.
+Google authorizes the script in your account. Your Google OAuth token remains inside Apps Script. The dashboard sends a separate connection key to the script and receives aggregate daily and realtime reports. It does not add a new tracking script to your websites or collect visitor-level events itself.
+
+The live pulse requests GA4 active-user totals by property, country counts and page views by minute. It polls once a minute only while the widget is visible, and shares a 60-second server cache across viewers. Properties without GA4 stay unreported; errors stay visible rather than becoming zero. Totals across properties can count the same person twice, and country counts may not sum to the property total. The live view never uses Search Console, which has no realtime report.
 
 See [Google setup and troubleshooting](docs/google-setup.md) for the manifest, Cloud project number, API switches, authorization and deployment steps.
 

@@ -61,3 +61,9 @@ For yesterday’s provisional figures and the new traffic detail panels, replace
 Keep the same /exec URL, return to Plotwake, and click Fetch latest. Older scripts still support the daily overview through a compatibility fallback, but retain their three-day delay and cannot supply detail reports. The dashboard explains when the script needs updating.
 
 Breakdown units differ: channels/referrers/campaigns/countries/entry pages use sessions, pages use page views, and search queries use clicks. Query lists omit anonymised queries and will not add up to all search clicks. Top rows are bounded. Shared GA4 properties still need to match the intended project scope.
+
+## Enabling Live pulse after upgrading to 0.3.0
+
+Replace Code.gs in your **existing** Apps Script project with the current [Code.gs](../public/google/Code.gs). Keep your manifest, Google Cloud project, connection key and existing `/exec` URL. Choose **Deploy → Manage deployments → Edit the existing web app → Version: New version → Deploy**. Saving the script does not update the deployed web app. No new OAuth scope is required. If Plotwake says “Update your Google script to enable live activity,” the web app is still running an older version.
+
+Live pulse requires each project you want to see to have a GA4 property mapped in Connections. The map shows country-level aggregates, not individual people or exact locations. GA4's realtime API normally covers the last five minutes here; it is independent of the daily reports and Search Console. The public demo always shows synthetic activity.
