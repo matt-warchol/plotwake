@@ -60,7 +60,11 @@ For yesterday’s provisional figures and the new traffic detail panels, replace
 
 Keep the same /exec URL, return to Plotwake, and click Fetch latest. Older scripts still support the daily overview through a compatibility fallback, but retain their three-day delay and cannot supply detail reports. The dashboard explains when the script needs updating.
 
-Breakdown units differ: channels/referrers/campaigns/countries/entry pages use sessions, pages use page views, and search queries use clicks. Query lists omit anonymised queries and will not add up to all search clicks. Top rows are bounded. Shared GA4 properties still need to match the intended project scope.
+Breakdown units differ: channels/referrers/campaigns/countries/entry pages use sessions, pages use page views, and search queries use clicks. Query lists omit anonymised queries and will not add up to all search clicks. Shared GA4 properties still need to match the intended project scope.
+
+The **Search pages** tab compares page clicks, impressions, CTR and average position with the preceding period. It flags a page when clicks fall by at least 3 and 10% while impressions remain within 5% of the previous period or grow. It compares Google's first 1,000 returned page rows from each period, so it is a practical watch list and may miss low-volume pages outside those results. Recent data can change.
+
+If the dashboard says the feature needs a script update, replace Code.gs in the existing Apps Script with the current [Code.gs](../public/google/Code.gs), then deploy a new version of the existing web app. Keep the same manifest, project number, key and `/exec` URL; no additional OAuth scope is needed.
 
 ## Enabling Live pulse after upgrading to 0.3.0
 

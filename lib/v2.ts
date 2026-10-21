@@ -1,9 +1,9 @@
 import {projectTotals,sourceIssue,type Project,type Report,type Metric} from './metrics.ts';
 
-export const kinds=['channels','referrers','campaigns','pages','landing','countries','queries'] as const;
+export const kinds=['channels','referrers','campaigns','pages','landing','countries','queries','search-pages'] as const;
 export type Kind=typeof kinds[number];
 export type V2Report=Report & {freshness?:{gaThrough?:string;gscThrough?:string;firstIncompleteDate?:string;gaTimezone?:string}};
-export type BreakdownRow={label:string;value:number;impressions?:number;project?:string};
+export type BreakdownRow={label:string;value:number;impressions?:number;project?:string;previousValue?:number;previousImpressions?:number;ctr?:number;previousCtr?:number;position?:number;previousPosition?:number;flagged?:boolean};
 export type Breakdown={rows:BreakdownRow[];errors:string[];upgradeRequired?:boolean;startDate?:string;endDate?:string;unit?:string};
 export function dateOffset(date:string,days:number){return new Date(Date.parse(date+'T00:00:00Z')+days*86400000).toISOString().slice(0,10);}
 export function through(reports:Report[],metric:Metric,settled:boolean,now=new Date()){

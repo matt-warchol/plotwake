@@ -61,13 +61,21 @@ function report_(p,dates,fresh){
 // V2 breakdowns use the existing read-only authorization. Original report action stays compatible.
 function breakdownV2_(input){
  var dimensions={channels:'sessionDefaultChannelGroup',referrers:'sessionSourceMedium',campaigns:'sessionCampaignName',pages:'pagePath',landing:'landingPagePlusQueryString',countries:'country'};
- if(!Array.isArray(input.projects)||input.projects.length>30||[7,28,90].indexOf(input.days)<0||!/^\d{4}-\d{2}-\d{2}$/.test(input.endDate)||(!dimensions[input.kind]&&input.kind!=='queries'))throw Error('Invalid breakdown');
+ if(!Array.isArray(input.projects)||input.projects.length>30||[7,28,90].indexOf(input.days)<0||!/^\d{4}-\d{2}-\d{2}$/.test(input.endDate)||(!dimensions[input.kind]&&input.kind!=='queries'&&input.kind!=='search-pages'))throw Error('Invalid breakdown');
  var end=new Date(input.endDate+'T00:00:00Z');if(isNaN(end.getTime())||end>new Date())throw Error('Invalid date');
- var start=new Date(end.getTime()-(input.days-1)*86400000).toISOString().slice(0,10),rows=[],errors=[];
+ var start=new Date(end.getTime()-(input.days-1)*86400000).toISOString().slice(0,10),previousEnd=new Date(Date.parse(start+'T00:00:00Z')-86400000).toISOString().slice(0,10),previousStart=new Date(Date.parse(previousEnd+'T00:00:00Z')-(input.days-1)*86400000).toISOString().slice(0,10),rows=[],errors=[];
  input.projects.forEach(function(p){
   if(typeof p.id!=='string'||(p.ga&&!/^properties\/\d+$/.test(p.ga))||(p.gsc&&!/^sc-domain:|^https?:\/\//.test(p.gsc)))throw Error('Invalid project');
   try{
-   if(input.kind==='queries'){
+   if(input.kind==='search-pages'){
+    if(!p.gsc){errors.push(p.id+': Search Console is not linked.');return;}
+    var url='https://www.googleapis.com/webmasters/v3/sites/'+encodeURIComponent(p.gsc)+'/searchAnalytics/query';
+    var current=google_(url,{startDate:start,endDate:input.endDate,dimensions:['page'],type:'web',dataState:'all',rowLimit:1000});
+    var previous=google_(url,{startDate:previousStart,endDate:previousEnd,dimensions:['page'],type:'web',dataState:'all',rowLimit:1000});
+    var prior={};(previous.rows||[]).forEach(function(row){prior[row.keys[0]]=row;});
+    var findings=(current.rows||[]).map(function(row){var old=prior[row.keys[0]];if(!old)return null;var clicks=Number(row.clicks),oldClicks=Number(old.clicks),impressions=Number(row.impressions),oldImpressions=Number(old.impressions),loss=oldClicks-clicks;return {label:row.keys[0],value:clicks,previousValue:oldClicks,impressions:impressions,previousImpressions:oldImpressions,ctr:Number(row.ctr),previousCtr:Number(old.ctr),position:Number(row.position),previousPosition:Number(old.position),flagged:oldImpressions>0&&impressions>=oldImpressions*.95&&loss>=Math.max(3,oldClicks*.1),project:p.id};}).filter(function(row){return row&&row.flagged;}).sort(function(a,b){return (b.previousValue-b.value)-(a.previousValue-a.value);}).slice(0,20);
+    rows=rows.concat(findings);
+   }else if(input.kind==='queries'){
     if(!p.gsc)return;
     var r=google_('https://www.googleapis.com/webmasters/v3/sites/'+encodeURIComponent(p.gsc)+'/searchAnalytics/query',{startDate:start,endDate:input.endDate,dimensions:['query'],type:'web',dataState:'all',rowLimit:30});
     (r.rows||[]).forEach(function(row){rows.push({label:row.keys[0],value:Number(row.clicks),impressions:Number(row.impressions),project:p.id});});

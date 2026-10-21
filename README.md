@@ -23,6 +23,7 @@ This is the whole application. It runs on Node.js with a local SQLite database. 
 - **Numbers with context.** Absolute changes before percentages. Missing history is not a measured zero. Overlapping Search Console scopes count once, including nested subdomains.
 - **Graceful failures.** A failed Search Console request does not hide healthy GA4 visits. Existing reports remain available, with warnings and last-successful-fetch timestamps.
 - **Traffic details.** Channels, referrers, campaigns, pages, entry pages, countries and Google search queries, with explicit units and date windows. Optional setup reminders can be hidden and restored.
+- **Search page watch.** In *What gets visited*, switch to *Search pages* to spot URLs whose clicks fell by at least 3 and 10% while impressions stayed within 5% or grew. Expand a row for CTR and average position vs the previous period. The report uses Google's top 1,000 page rows per period, so it is a focused warning list rather than an exhaustive crawl.
 - **A practical interface.** Mobile project cards, visible freshness, remembered view settings, separate settings drafts and Cancel.
 
 ## Try before connecting anything
