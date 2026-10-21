@@ -4,7 +4,9 @@
 <p align="center"><a href="https://avo42.com/pulse/">Try the live demo</a> · <a href="#quick-start">Run it yourself</a> · <a href="docs/google-setup.md">Connect Google</a> · <a href="https://github.com/matt-warchol/plotwake/issues">Issues</a></p>
 <p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-328d79" alt="MIT license"></a> <img src="https://img.shields.io/badge/Node.js-24%2B-339933?logo=nodedotjs&logoColor=white" alt="Node.js 24 or later"> <img src="https://img.shields.io/badge/self--hosted-your%20data%2C%20your%20server-5b9dcb" alt="Self-hosted"></p>
 
-[![Plotwake Live pulse: rotate the country globe, switch to the activity matrix, and watch sample activity update](assets/plotwake-demo.gif)](https://avo42.com/pulse/)
+<p align="center"><a href="https://avo42.com/pulse/"><img src="assets/plotwake-dashboard.png" alt="Full Plotwake dashboard with executive summary, portfolio metrics, project comparison chart, live pulse, traffic details and project table"></a></p>
+
+<p align="center"><a href="https://avo42.com/pulse/"><img src="assets/plotwake-demo.gif" alt="Animated tour of the full Plotwake dashboard, from the executive summary through the live pulse and traffic reports"></a></p>
 
 *Real project names, synthetic numbers. The animation and [public demo](https://avo42.com/pulse/) do not show actual project traffic.*
 
